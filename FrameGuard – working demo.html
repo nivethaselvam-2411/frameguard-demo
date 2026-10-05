@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FrameGuard – working demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;--page:#E3E6EC;--bg:#F2F3F6;--ink:#11151C;--mute:#5E6878;--rule:#D5D9E0;--panel:#fff;--blue:#1747D6;--red:#C8182F;--wash:rgba(200,24,47,.10)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#0A0D14;--bg:#0E1117;--ink:#EEF1F6;--mute:#8F99AB;--rule:#272E3A;--panel:#171C25;--blue:#6B95FF;--red:#FF5468;--wash:rgba(255,84,104,.16)}}
+:root[data-theme="dark"]{--page:#0A0D14;--bg:#0E1117;--ink:#EEF1F6;--mute:#8F99AB;--rule:#272E3A;--panel:#171C25;--blue:#6B95FF;--red:#FF5468;--wash:rgba(255,84,104,.16)}
+*,*:before,*:after{box-sizing:inherit}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{background:var(--page);color:var(--ink);font:400 16px/1.5 'Source Serif 4',Georgia,serif;display:flex;align-items:center;justify-content:center}
+button,.sans,th,.tabs{font-family:'Archivo Narrow','Arial Narrow',sans-serif}
+.dev{width:370px;height:min(780px,calc(100% - 24px));background:#000;border-radius:42px;padding:7px;position:relative}
+.scr{width:100%;height:100%;background:var(--bg);border-radius:35px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.cam{position:absolute;top:11px;left:50%;width:11px;height:11px;margin-left:-5px;border-radius:50%;background:#000;z-index:5}
+.sb{display:flex;justify-content:space-between;padding:10px 24px 4px;font:700 13px 'Archivo Narrow',sans-serif;height:32px;flex:none}
+.sb i{display:inline-block;width:20px;height:9px;border:1.5px solid currentColor;border-radius:3px;position:relative}
+.sb i:after{content:"";position:absolute;inset:1px 5px 1px 1px;background:currentColor}
+.gest{height:18px;display:flex;justify-content:center;align-items:center;flex:none}.gest b{width:96px;height:4px;border-radius:2px;background:var(--ink);opacity:.4}
+@media(max-width:520px){body{display:block;height:100dvh}.dev{width:100%;height:100dvh;border-radius:0;padding:0;background:none}.scr{border-radius:0;padding-top:env(safe-area-inset-top,0px)}.cam,.sb,.gest{display:none}.tabs{padding-bottom:env(safe-area-inset-bottom,0px)}}
+.views{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;overflow-y:auto;padding:6px 20px 20px;background:var(--bg)}
+.view[hidden]{display:none}
+#v-play{padding:0;display:flex;flex-direction:column}
+.dev{min-height:0}
+.tabs{display:flex;border-top:1px solid var(--rule);background:var(--panel);flex:none}
+.tabs button{flex:1;background:none;border:0;padding:12px 0 10px;font-size:15px;font-weight:500;color:var(--mute);cursor:pointer}
+.tabs button[aria-selected=true]{color:var(--ink);font-weight:700;box-shadow:inset 0 2px 0 var(--ink)}
+button:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+h1{font:700 28px/1.1 'Archivo Narrow',sans-serif;margin:8px 0 4px}
+h2{font:700 18px 'Archivo Narrow',sans-serif;margin:20px 0 2px}
+.sub,.fine{color:var(--mute);font-size:14px;margin:4px 0}
+.go{background:var(--ink);color:var(--bg);border:0;padding:13px 20px;font:700 17px 'Archivo Narrow',sans-serif;border-radius:3px;cursor:pointer}
+.go.q{background:none;color:var(--ink);border:1px solid var(--rule);margin-right:8px;padding:9px 14px;font-size:15px}
+.hud{display:flex;justify-content:space-between;padding:6px 20px;font:500 15px 'Archivo Narrow',sans-serif;color:var(--mute);font-variant-numeric:tabular-nums;flex:none}
+.hud b{color:var(--ink);font-size:22px;margin-left:3px}
+#cw{flex:1;min-height:0;position:relative;background:#0E1117;touch-action:none}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#ov{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:24px;background:rgba(14,17,23,.92);color:#EEF1F6}
+#ov .fine{color:#9AA3B6}#ov .go{background:#EEF1F6;color:#0E1117;align-self:flex-start;margin-top:14px}
+#ov h1{color:#EEF1F6}
+svg{width:100%;height:auto;display:block;overflow:visible}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-weight:500;color:var(--mute);text-align:left;font-size:14px;padding:6px 0;border-bottom:1px solid var(--ink)}
+td{padding:9px 0;border-bottom:1px solid var(--rule);font:500 16px 'Archivo Narrow',sans-serif}
+td.r,th.r{text-align:right}tr.sel td{background:var(--wash)}tbody tr{cursor:pointer}
+.hit{color:var(--red);font-weight:700}
+.find{display:grid;grid-template-columns:70px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid var(--rule);font-size:15px;line-height:1.45}
+.find .n{font:700 34px/1 'Archivo Narrow',sans-serif;color:var(--red)}.find.b .n{color:var(--blue)}.find p{margin:0}
+.lr{display:grid;grid-template-columns:54px 1fr 40px 30px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--rule);font:500 15px 'Archivo Narrow',sans-serif;font-variant-numeric:tabular-nums}
+.lr .bar{height:7px;background:var(--rule)}.lr .bar i{display:block;height:100%;background:var(--blue)}
+.lr span:nth-child(n+3){text-align:right}
+.tag{font-size:11px;color:var(--mute);border:1px solid var(--rule);padding:0 4px;margin-left:4px}
+</style>
+</head>
+<body>
+<div class="dev"><div class="scr">
+ <div class="cam"></div>
+ <div class="sb"><span id="clock">21:07</span><span><i></i></span></div>
+ <div class="views">
+  <section class="view" id="v-play">
+   <div class="hud"><span>Time<b id="hT">45</b></span><span>Kills<b id="hK">0</b></span><span>HP<b id="hH">3</b></span><span>FPS<b id="hF">--</b></span></div>
+   <div id="cw"><canvas id="cv"></canvas>
+    <div id="ov">
+     <h1 style="margin-top:0">Hold the line</h1>
+     <p class="fine" style="font-size:15px">Tap the red blocks before they reach the line. Three leaks and you die, then respawn. The match lasts 45 seconds.</p>
+     <p class="fine" style="font-size:15px">Smoke clouds add heavy effects on purpose so frame drops happen. FrameGuard measures your real frame rate and tap response while you play.</p>
+     <button class="go" id="start">Start match</button>
+    </div>
+   </div>
+  </section>
+
+  <section class="view" id="v-debrief" hidden>
+   <div id="dbEmpty"><h1>No match yet</h1><p class="sub">Play a match and the debrief appears here.</p></div>
+   <div id="db" hidden>
+    <p class="sub" id="dbMeta"></p>
+    <h1 id="dbHead"></h1>
+    <svg id="svg" viewBox="0 0 340 170" role="img" aria-label="Frame rate across the match with deaths marked"></svg>
+    <h2>Deaths</h2>
+    <table><thead><tr><th>Time</th><th>Lowest FPS, prior 3 s</th><th class="r">Cause</th></tr></thead><tbody id="tb"></tbody></table>
+    <p class="fine" id="tbNote"></p>
+    <div id="finds"></div>
+    <button class="go" id="again" style="margin-top:16px">Play again</button>
+    <p class="fine" style="margin-top:14px">Temperature isn't readable from a web page. The phone app adds it, along with the thermal findings.</p>
+   </div>
+  </section>
+
+  <section class="view" id="v-trends" hidden>
+   <h1>Your matches</h1>
+   <p class="sub" id="trSum">Play a match to start your history.</p>
+   <div id="lg"></div>
+   <p style="margin-top:16px"><button class="go q" id="seed">Add sample history</button><button class="go q" id="clear">Clear</button></p>
+   <p class="fine">Matches are saved on this device only. Sample matches are labelled.</p>
+  </section>
+
+  <section class="view" id="v-rank" hidden>
+   <h1 id="rkHead">Play a match first</h1>
+   <p class="sub">Frame stability, you against other players on the same phone.</p>
+   <svg id="curve" viewBox="0 0 340 150" role="img" aria-label="Distribution of frame stability with your position"></svg>
+   <p class="fine" style="margin-top:12px">Stability is the share of the match without frame drops. The comparison group is a sample distribution for this demo. In the real app it comes from pooled, anonymized device averages, and sharing is opt-in.</p>
+  </section>
+ </div>
+ <div class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-t="play">Play</button>
+  <button role="tab" aria-selected="false" data-t="debrief">Debrief</button>
+  <button role="tab" aria-selected="false" data-t="trends">Trends</button>
+  <button role="tab" aria-selected="false" data-t="rank">Rank</button>
+ </div>
+ <div class="gest"><b></b></div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const LEN=45, SMOKES=[6,14,23,32,39], SMOKE_LEN=3.5, WIN=3;
+const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+const med=a=>{const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]};
+const mean=a=>a.reduce((x,y)=>x+y,0)/(a.length||1);
+function store(k,v){try{if(v===undefined){return JSON.parse(localStorage.getItem(k)||'null')}localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+let sessions=store('fg_sessions')||[];
+let last=null; // last analysed match
+let sel=-1;
+
+/* ---------- tabs ---------- */
+function tab(t){
+ document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
+ ['play','debrief','trends','rank'].forEach(v=>$('v-'+v).hidden=v!==t);
+ if(t==='trends')renderTrends(); if(t==='rank')renderRank();
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+setInterval(()=>{const d=new Date();$('clock').textContent=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0')},5000);
+$('clock').textContent=new Date().getHours()+':'+String(new Date().getMinutes()).padStart(2,'0');
+
+/* ---------- game ---------- */
+const cv=$('cv'),cx=cv.getContext('2d');
+let CW=300,CH=500,DPR=1;
+function size(){const r=$('cw').getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);CW=r.width;CH=r.height;cv.width=CW*DPR;cv.height=CH*DPR;cx.setTransform(DPR,0,0,DPR,0,0)}
+new ResizeObserver(size).observe($('cw'));size();
+
+let G=null;
+function startMatch(){
+ G={t0:performance.now(),last:performance.now(),enemies:[],hp:3,kills:0,deaths:[],samples:[],taps:[],frames:0,win:performance.now(),lastFps:60,acc:0,flash:0,pending:null,smokeOn:false,over:false};
+ $('ov').hidden=true;tab('play');requestAnimationFrame(frame);
+}
+function frame(now){
+ if(!G||G.over)return;
+ const dt=Math.min(.1,(now-G.last)/1000);G.last=now;G.frames++;
+ const t=(now-G.t0)/1000;
+ G.smokeOn=SMOKES.some(s=>t>=s&&t<s+SMOKE_LEN);
+ if(now-G.win>=250){G.lastFps=G.frames/((now-G.win)/1000);G.samples.push({t,fps:G.lastFps,smoke:G.smokeOn});G.frames=0;G.win=now;$('hF').textContent=Math.round(G.lastFps)}
+ // spawn + move
+ G.acc+=dt*(G.smokeOn?1.7:.8);
+ while(G.acc>=1){G.acc--;G.enemies.push({x:30+Math.random()*(CW-60),y:-20,v:(75+Math.random()*50)*CH/560})}
+ const line=CH-46;
+ G.enemies=G.enemies.filter(e=>{e.y+=e.v*dt;if(e.y>line){G.hp--;if(G.hp<=0){G.deaths.push(t);G.hp=3;G.flash=.35;G.enemies.forEach(x=>x.dead=1)}return false}return !e.dead});
+ G.flash=Math.max(0,G.flash-dt);
+ // draw
+ cx.fillStyle='#0E1117';cx.fillRect(0,0,CW,CH);
+ cx.strokeStyle='#3A4356';cx.lineWidth=2;cx.beginPath();cx.moveTo(0,line);cx.lineTo(CW,line);cx.stroke();
+ cx.fillStyle='#FF5468';G.enemies.forEach(e=>cx.fillRect(e.x-18,e.y-18,36,36));
+ if(G.smokeOn){
+  for(let i=0;i<40;i++){const a=i*2.4;cx.fillStyle='rgba(160,170,190,.07)';cx.beginPath();cx.arc(CW/2+Math.cos(a)*CW*.3,CH*.45+Math.sin(a*1.3)*CH*.25,CW*.28,0,7);cx.fill()}
+  const s=performance.now();while(performance.now()-s<22){} // heavy-effect load
+ }
+ if(G.flash>0){cx.fillStyle=`rgba(255,84,104,${G.flash})`;cx.fillRect(0,0,CW,CH)}
+ // tap latency: input timestamp -> this frame
+ if(G.pending!==null){G.taps.push({t,lat:performance.now()-G.pending,fps:G.lastFps});G.pending=null}
+ $('hT').textContent=Math.max(0,Math.ceil(LEN-t));$('hK').textContent=G.kills;$('hH').textContent=G.hp;
+ if(t>=LEN){G.over=true;finish();return}
+ requestAnimationFrame(frame);
+}
+cv.addEventListener('pointerdown',e=>{
+ if(!G||G.over)return;
+ const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+ const i=G.enemies.findIndex(en=>Math.abs(en.x-x)<30&&Math.abs(en.y-y)<30);
+ if(i>=0){G.enemies.splice(i,1);G.kills++}
+ G.pending=e.timeStamp;
+});
+$('start').onclick=startMatch;$('again').onclick=()=>{$('ov').hidden=true;startMatch()};
+
+/* ---------- analysis ---------- */
+function analyse(g){
+ const S=g.samples,f=S.map(s=>s.fps),m=med(f),thr=.75*m;
+ const low=(a,b)=>{const w=S.filter(s=>s.t>=a&&s.t<=b);return w.length?Math.min(...w.map(s=>s.fps)):null};
+ const rows=g.deaths.map(d=>{const lo=low(d-WIN,d);return{t:d,lo,hit:lo!==null&&lo<thr}});
+ let exp=0;S.forEach(s=>{const lo=low(s.t-WIN,s.t);if(lo!==null&&lo<thr)exp++});
+ const dipN=S.filter(s=>s.fps<thr).length;
+ const nl=g.taps.filter(t=>t.fps>=thr).map(t=>t.lat),dl=g.taps.filter(t=>t.fps<thr).map(t=>t.lat);
+ const sm=S.filter(s=>s.smoke).map(s=>s.fps),ns=S.filter(s=>!s.smoke).map(s=>s.fps);
+ return{S,thr,med:m,avg:mean(f),stab:100*(1-dipN/(S.length||1)),rows,rel:rows.filter(r=>r.hit).length,share:exp/(S.length||1),
+  latN:nl.length?mean(nl):null,latD:dl.length?mean(dl):null,smoke:sm.length?mean(sm):null,calm:ns.length?mean(ns):null,kills:g.kills,at:Date.now()};
+}
+function finish(){
+ last=analyse(G);
+ sessions.push({at:last.at,avg:last.avg,stab:last.stab,deaths:last.rows.length,rel:last.rel,kills:last.kills});
+ store('fg_sessions',sessions);
+ $('ov').hidden=false;$('ov').querySelector('h1').textContent='Match over';
+ $('ov').querySelectorAll('p')[0].textContent=`You got ${last.kills} kills and died ${last.rows.length} time${last.rows.length==1?'':'s'}.`;
+ $('ov').querySelectorAll('p')[1].textContent='Your debrief is ready.';
+ $('start').textContent='Open debrief';$('start').onclick=()=>{tab('debrief');$('start').textContent='Start match';$('start').onclick=startMatch};
+ renderDebrief();
+}
+
+/* ---------- debrief ---------- */
+function renderDebrief(){
+ const a=last;if(!a)return;
+ $('dbEmpty').hidden=true;$('db').hidden=false;
+ const d=a.rows.length;
+ $('dbMeta').textContent=`${LEN} s match · ${a.kills} kills · median ${Math.round(a.med)} FPS`;
+ $('dbHead').textContent=d?`${a.rel} of ${d} death${d==1?'':'s'} followed an FPS drop`:'No deaths, and '+Math.round(100-a.stab)+'% of the match had drops';
+ sel=-1;drawChart();
+ $('tb').innerHTML=a.rows.length?a.rows.map((r,k)=>`<tr data-k="${k}" tabindex="0"><td>${fmt(r.t)}</td><td>${r.lo===null?'–':Math.round(r.lo)}</td><td class="r ${r.hit?'hit':''}">${r.hit?'After a drop':'Not lag'}</td></tr>`).join(''):'<tr><td colspan="3">No deaths this match.</td></tr>';
+ $('tbNote').textContent=a.rows.length?'Select a row to find it on the chart.':'';
+ document.querySelectorAll('#tb tr[data-k]').forEach(tr=>{const f=()=>{sel=+tr.dataset.k;drawChart();document.querySelectorAll('#tb tr').forEach(x=>x.classList.toggle('sel',x===tr))};tr.onclick=f;tr.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}}});
+ let h='';
+ if(d>=1&&a.rel>0&&a.share>0){const r=(a.rel/d)/a.share;
+  h+=`<div class="find"><span class="n">${r.toFixed(1)}×</span><p>Frame drops covered ${Math.round(a.share*100)}% of the match but ${Math.round(100*a.rel/d)}% of your deaths came right after one. It tends to coincide with lost fights${d<4?', though with this few deaths the signal is weak. Play another match to firm it up':''}.</p></div>`}
+ else if(d>=1){h+=`<div class="find"><span class="n">0</span><p>None of your deaths came right after a frame drop this match, so lag doesn't explain these.</p></div>`}
+ if(a.smoke!==null&&a.calm!==null){h+=`<div class="find b"><span class="n">${Math.round(a.calm-a.smoke)}</span><p>FPS lost inside smoke: ${Math.round(a.calm)} outside, ${Math.round(a.smoke)} in it.</p></div>`}
+ if(a.latN!==null&&a.latD!==null){h+=`<div class="find b"><span class="n">${Math.round(a.latD)}<small style="font-size:14px"> ms</small></span><p>Tap response during drops, against ${Math.round(a.latN)} ms normally. Your taps landed that much later in the frame.</p></div>`}
+ h+=`<p style="margin:14px 0 0">${a.smoke!==null&&a.calm-a.smoke>10?'Try lowering smoke and effects quality, or cap the frame rate lower so it stays steady.':'Your frame rate stayed steady. A lower effects setting is the only thing left to try.'}</p>`;
+ $('finds').innerHTML=h;
+}
+function drawChart(){
+ const a=last,W=340,H=170,L=26,B=18,T=6,mx=a.med*1.2;
+ const X=t=>L+t/LEN*(W-L-6),Y=v=>T+(1-Math.min(v,mx)/mx)*(H-T-B);
+ let s=[Math.round(a.thr)].map(v=>`<line x1="${L}" x2="${W-6}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--red)" stroke-dasharray="3 4" opacity=".6"/><text x="${L-4}" y="${Y(v)+3}" font-size="10" fill="var(--red)" text-anchor="end">${v}</text>`).join('');
+ s+=`<line x1="${L}" x2="${W-6}" y1="${Y(a.med)}" y2="${Y(a.med)}" stroke="var(--rule)"/><text x="${L-4}" y="${Y(a.med)+3}" font-size="10" fill="var(--mute)" text-anchor="end">${Math.round(a.med)}</text>`;
+ SMOKES.forEach(t0=>s+=`<rect x="${X(t0)}" y="${H-B-4}" width="${X(t0+SMOKE_LEN)-X(t0)}" height="4" fill="var(--mute)" opacity=".5"/>`);
+ let st=null;a.S.forEach((p,i)=>{if(p.fps<a.thr&&st===null)st=p.t;if((p.fps>=a.thr||i===a.S.length-1)&&st!==null){s+=`<rect x="${X(st)}" y="${T}" width="${Math.max(2,X(p.t)-X(st))}" height="${H-T-B}" fill="var(--wash)"/>`;st=null}});
+ s+=`<path d="${a.S.map((p,i)=>(i?'L':'M')+X(p.t).toFixed(1)+' '+Y(p.fps).toFixed(1)).join('')}" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/>`;
+ a.rows.forEach((r,k)=>{const on=k===sel,y=Y((a.S.filter(p=>p.t<=r.t).pop()||{fps:a.med}).fps);
+  s+=`<line x1="${X(r.t)}" x2="${X(r.t)}" y1="${T}" y2="${H-B}" stroke="var(--red)" stroke-width="${on?1.5:.8}" opacity="${on?1:.5}"/><circle cx="${X(r.t)}" cy="${y}" r="${on?5.5:3.5}" fill="var(--red)"/>`;
+  if(on)s+=`<text x="${Math.min(X(r.t)+8,W-30)}" y="${T+12}" font-size="12" font-weight="700" fill="var(--red)">${fmt(r.t)}</text>`});
+ [0,15,30,45].forEach(t=>s+=`<text x="${X(t)}" y="${H-3}" font-size="10" fill="var(--mute)" text-anchor="${t?t==45?'end':'middle':'start'}">${t}s</text>`);
+ $('svg').innerHTML=s+`<text x="${W-6}" y="${H-B-8}" font-size="9" fill="var(--mute)" text-anchor="end">smoke</text>`;
+}
+
+/* ---------- trends & rank ---------- */
+function renderTrends(){
+ const s=sessions.slice(-8).reverse();
+ $('lg').innerHTML=s.length?`<div class="lr" style="color:var(--mute);font-size:13px;border-bottom-color:var(--ink)"><span>Match</span><span>Stability</span><span>FPS</span><span>Died</span></div>`+s.map(x=>{const d=new Date(x.at);return`<div class="lr"><span>${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}${x.sample?'<span class="tag">sample</span>':''}</span><span class="bar"><i style="width:${x.stab}%"></i></span><span>${Math.round(x.avg)}</span><span>${x.deaths}</span></div>`}).join(''):'';
+ const D=sessions.reduce((a,x)=>a+x.deaths,0),R=sessions.reduce((a,x)=>a+x.rel,0);
+ $('trSum').textContent=sessions.length?(D?`Across ${sessions.length} matches, ${Math.round(100*R/D)}% of your deaths followed a frame drop.`:`${sessions.length} matches saved, no deaths yet.`):'Play a match to start your history.';
+}
+$('seed').onclick=()=>{const n=Date.now();for(let i=6;i>=1;i--){const st=Math.round(70+Math.random()*25),d=1+Math.floor(Math.random()*5);sessions.unshift({at:n-i*3600e3,avg:50+Math.random()*10,stab:st,deaths:d,rel:Math.round(d*(1-st/110)*1.6),kills:10,sample:true})}store('fg_sessions',sessions);renderTrends()};
+$('clear').onclick=()=>{sessions=[];store('fg_sessions',sessions);renderTrends()};
+const erf=x=>{const s=Math.sign(x);x=Math.abs(x);const t=1/(1+.3275911*x);return s*(1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x))};
+function renderRank(){
+ const MU=86,SD=9,w=340,h=150,x=v=>6+(v-50)/50*(w-12),y=g=>h-22-g*(h-44);
+ const mine=sessions.length?mean(sessions.map(s=>s.stab)):null;
+ let p='',a='';for(let v=50;v<=100;v+=.5){const g=Math.exp(-((v-MU)**2)/(2*SD*SD));p+=(v==50?'M':'L')+x(v).toFixed(1)+' '+y(g).toFixed(1);if(mine!==null&&v>=mine)a+=(a?'L':'M')+x(v).toFixed(1)+' '+y(g).toFixed(1)}
+ let s='';
+ if(mine!==null){const top=Math.max(1,Math.round(100*(1-.5*(1+erf((mine-MU)/(SD*Math.SQRT2))))));$('rkHead').textContent=`Top ${top}% on this phone`;
+  s+=`<path d="${a}L${x(100)} ${y(0)}L${x(Math.min(mine,100))} ${y(0)}Z" fill="var(--blue)" opacity=".25"/>`}
+ s+=`<path d="${p}" fill="none" stroke="var(--ink)" stroke-width="1.5"/><line x1="6" x2="${w-6}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ink)"/>`;
+ if(mine!==null)s+=`<line x1="${x(Math.min(mine,100))}" x2="${x(Math.min(mine,100))}" y1="14" y2="${y(0)}" stroke="var(--blue)" stroke-width="2"/><text x="${x(Math.min(mine,100))-6}" y="12" font-size="13" font-weight="700" fill="var(--blue)" text-anchor="end">You ${Math.round(mine)}%</text>`;
+ s+=`<text x="${x(MU)}" y="${h-4}" font-size="11" fill="var(--mute)" text-anchor="middle">Median ${MU}%</text><text x="6" y="${h-4}" font-size="11" fill="var(--mute)">50%</text><text x="${w-6}" y="${h-4}" font-size="11" fill="var(--mute)" text-anchor="end">100%</text>`;
+ $('curve').innerHTML=s;
+}
+</script>
+</body>
+</html>
